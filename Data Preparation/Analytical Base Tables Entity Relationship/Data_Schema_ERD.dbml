@@ -1,0 +1,92 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+// https://dbdiagram.io/d/Inventory-Optimization-Data-Schema-Diagram-65bd8a35ac844320ae58ac4d
+
+Table Product_Info {
+  ////BegInvFINAL12312016 + EndInvFINAL12312016 - Description, 
+  //Generate - ProductSKU
+  // GPT Pull Tables
+  ProductSKU varchar [primary key, note: 'Indicates a product SKU (Description x Volume)']
+  Description varchar
+  VolumeSize integer
+  AlcoholType integer
+  ABV integer
+  FlavorProfile integer
+  Classification varchar
+}
+
+Table Vendor_Info {
+  //2017PurchasePricesDec
+  VendorNumber varchar [primary key, note: 'Indicates a vendor']
+  VendorName varchar
+}
+
+Table Store_Info {
+  //SalesFINAL12312016
+  StoreID varchar [primary key]
+  City varchar
+}
+
+Table Product_Purchase_Sale_Prices {
+  //2017PurchasePricesDec
+  //SalesFINAL12312016 - ExciseTax
+  //Product_Info - ProductSKU
+  Brand varchar [primary key, note: 'Indicates a purchase combination (ProductID x Vendor X PurchasePrice)']
+  ProductSKU varchar
+  VendorNumber varchar
+  PurchasePrice float [note: 'Cost price']
+  SalesPrice float [note: 'Customer Selling price']
+  ExciseTax float [note: 'Tax involved in price']
+}
+
+Table Begin_End_Inventory {
+  //BegInvFINAL12312016 + EndInvFINAL12312016
+  Date date [primary key] 
+  StoreID varchar [primary key]
+  Brand varchar [primary key]
+  InventorySize integer 
+}
+
+Table Purchase_Order_Deliviery_History [note: 'Indicates a purchase combination (Note: Same PONumber can be allocated to multiple stores orderd on same day)'] {
+  //PurchasesFINAL12312016 
+  PONumber varchar [primary key]
+  StoreID varchar [primary key]
+  Brand varchar [primary key]
+  VendorNumber varchar
+  PODate date
+  InvoiceDate date
+  ReceivingDate date [primary key]
+  PayDate date
+  //FreightCost float
+  PurchaseQuantity integer
+  // PurchasePrice float
+  PurchasePriceTotal float [note: 'PurchaseQuantity x PurchasePrice']
+}
+
+Table Sales_History {
+  //SalesFINAL12312016
+  StoreID varchar [primary key]
+  SalesDate date [primary key]
+  Brand varchar [primary key]
+  SalesQuantity integer
+  SalesPriceTotal float [note: 'SalesQuantity x SalesPrice']
+}
+
+
+Ref: Product_Purchase_Sale_Prices.ProductSKU > Product_Info.ProductSKU
+
+Ref: Product_Purchase_Sale_Prices.VendorNumber > Vendor_Info.VendorNumber
+
+Ref: Begin_End_Inventory.StoreID > Store_Info.StoreID
+
+Ref: Begin_End_Inventory.Brand > Product_Purchase_Sale_Prices.Brand
+
+Ref: Purchase_Order_Deliviery_History.Brand > Product_Purchase_Sale_Prices.Brand
+
+Ref: Purchase_Order_Deliviery_History.StoreID > Store_Info.StoreID
+
+Ref: Purchase_Order_Deliviery_History.VendorNumber > Vendor_Info.VendorNumber
+
+Ref: Sales_History.StoreID > Store_Info.StoreID
+
+Ref: Sales_History.Brand > Product_Purchase_Sale_Prices.Brand

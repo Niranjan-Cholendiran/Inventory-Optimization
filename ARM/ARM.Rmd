@@ -1,0 +1,123 @@
+---
+title: "ARM"
+author: "Niranjan"
+date: "2024-02-22"
+output: html_document
+---
+
+```{r Install required packages}
+install.packages("arules")
+install.packages("TSP")
+install.packages("data.table")
+install.packages("arulesViz", dependencies = TRUE)
+install.packages("sp")
+install.packages("openxlsx")
+```
+
+```{r Import libraries}
+library(tidyverse)
+library(viridis)
+library(arules)
+library(TSP)
+library(data.table)
+library(tcltk)
+library(dplyr)
+library(devtools)
+library(purrr)
+library(tidyr)
+library(openxlsx)
+library(arulesViz)
+library(htmlwidgets)
+```
+
+```{r Load and prepare datset}
+data= read.csv('Clustered_Product_Info.csv')
+head(data)
+
+basket <- data %>%
+  select(AlcoholType, FlavorProfile)
+
+# Convert all columns to factors as required by ARM models
+basket <- mutate_all(basket, as.factor)
+
+head(basket,10)
+
+write.xlsx(basket, file = "basket.xlsx", row.names = FALSE)
+
+#str(basket)
+```
+
+```{r ARM on the entire data}
+basket <- basket %>%
+    select(AlcoholType, FlavorProfile)
+
+transactions <- as(basket, "transactions")
+
+
+rules <- arules::apriori(transactions, parameter = list(support=.05, confidence=.1, minlen=1))
+inspect(rules)
+
+# Plot the rules as network graphs
+plot_html <- plot(rules, method="graph", control = list(type = "items", main = "Association Rules Network"), engine="htmlwidget")
+plot_html
+plot(rules, method="graph", control = list(type = "items", main = "Association Rules Network"), engine="igraph")
+
+# Save the plot as an HTML file
+saveWidget(plot_html, file = "association_rules_plot.html", selfcontained = TRUE)
+
+inspect(subrules)
+(summary(subrules))
+```
+
+
+```{r ARM for Laggard products}
+transactions <- basket %>%
+  filter(ProductDemandCluster=='Laggard')  %>%
+    select(AlcoholType, FlavorProfile)
+
+Rules <- apriori(data=transactions,parameter = list(supp=.1, conf=.3, minlen=1))
+inspect(Rules)
+
+Rules_df <- as.data.frame(inspect(Rules))
+write.xlsx(Rules_df, file = "ARM_Laggard.xlsx", row.names = FALSE)
+```
+
+```{r ARM for Cash Cow products}
+transactions <- basket %>%
+  filter(ProductDemandCluster=='Cash Cow')  %>%
+    select(AlcoholType, FlavorProfile)
+
+c("Total Transaction",dim(transactions))
+
+Rules <- apriori(data=transactions,parameter = list(supp=.1, conf=.2, minlen=1))
+inspect(Rules)
+
+Rules_df <- as.data.frame(inspect(Rules))
+write.xlsx(Rules_df, file = "ARM_CashCow.xlsx", row.names = FALSE)
+
+```
+
+```{r ARM for Commodity products}
+transactions <- basket %>%
+  filter(ProductDemandCluster=='Commodity')  %>%
+    select(AlcoholType, FlavorProfile)
+
+Rules <- apriori(data=transactions,parameter = list(supp=.1, conf=.2, minlen=1))
+inspect(Rules)
+
+Rules_df <- as.data.frame(inspect(Rules))
+write.xlsx(Rules_df, file = "ARM_Commodity.xlsx", row.names = FALSE)
+```
+
+
+```{r ARM for Luxury products}
+transactions <- basket %>%
+  filter(ProductDemandCluster=='Luxury')  %>%
+    select(AlcoholType, FlavorProfile)
+
+Rules <- apriori(data=transactions,parameter = list(supp=.1, conf=.3, minlen=1))
+inspect(Rules)
+
+Rules_df <- as.data.frame(inspect(Rules))
+write.xlsx(Rules_df, file = "ARM_Luxury.xlsx", row.names = FALSE)
+```

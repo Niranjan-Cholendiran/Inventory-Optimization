@@ -1,0 +1,101 @@
+---
+title: "Hierarchical Clustering"
+author: "Niranjan"
+date: "2024-02-22"
+output: html_document
+---
+
+```{r libraries}
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(stylo)
+library(philentropy)
+#install.packages("philentropy")
+```
+
+```{r read and prepare data}
+# Read the data
+data <- read.csv('cluster_ip_data.csv')
+
+# Filter the columns to be used for clustering
+data_to_cluster <- data %>%
+  select("ProfitPerQty","DemandPerDay")
+
+data_dist <- dist(data_to_cluster)
+distance_matrix <- distance(as.matrix(data_dist), method="cosine")
+```
+
+```{r Find Optimal Clusters}
+# Elbow Method
+fviz_nbclust(
+  data_to_cluster, 
+  FUNcluster = hcut, 
+  k.max = 10,
+  method = "wss",
+  diss = distance_matrix
+)
+
+# Silhouette
+fviz_nbclust(data_to_cluster, method = "silhouette", FUN = hcut, k.max = 10)
+```
+
+The optimal number of clusters suggested by the Elbow and Silhouette score is 3. Hence, building a dendogram and cutting it at the 3rd level:
+
+```{r Hierarchical Clutering}
+# Fit data into the Hierarchical Model and build the dendogram
+hc <- hclust(as.dist(distance_matrix), method = "ward.D")
+
+# Plot the dendogram
+plot(hc, cex=0.9, hang=-1, main = "Dendogram")
+
+# Cut the dendrogram into k clusters
+#k <- 4
+#cluster_labels <- cutree(hc, k)
+#rect.hclust(hc, k=3)
+```
+
+```{r Hierarchical Clutering}
+# Cut the dendrogram into k clusters
+k <- 3
+cluster_labels <- cutree(hc, k)
+
+# Add cluster labels to the data
+data_to_cluster$cluster <- factor(cluster_labels)
+
+# Plotting the result
+ggplot(data_to_cluster, aes(x = ProfitPerQty, y = DemandPerDay, color = cluster)) +
+  geom_point() +
+  scale_color_manual(values = c("blue", "green", "red", "yellow")) +
+  labs(title = "Hierarchical Clustering Output for K=3", x = "Profit Per Qty", y = "Demand Per Day") +
+  theme_minimal()
+
+# Cut the dendrogram into k clusters
+k <- 4
+cluster_labels <- cutree(hc, k)
+
+# Add cluster labels to the data
+data_to_cluster$cluster <- factor(cluster_labels)
+
+# Plotting the result
+ggplot(data_to_cluster, aes(x = ProfitPerQty, y = DemandPerDay, color = cluster)) +
+  geom_point() +
+  scale_color_manual(values = c("blue", "green", "red", "yellow")) +
+  labs(title = "Hierarchical Clustering Output for K=4", x = "Profit Per Qty", y = "Demand Per Day") +
+  theme_minimal()
+
+# Cut the dendrogram into k clusters
+k <- 5
+cluster_labels <- cutree(hc, k)
+
+# Add cluster labels to the data
+data_to_cluster$cluster <- factor(cluster_labels)
+
+# Plotting the result
+ggplot(data_to_cluster, aes(x = ProfitPerQty, y = DemandPerDay, color = cluster)) +
+  geom_point() +
+  scale_color_manual(values = c("blue", "green", "red", "yellow", "black")) +
+  labs(title = "Hierarchical Clustering Output for K=5", x = "Profit Per Qty", y = "Demand Per Day") +
+  theme_minimal()
+```
+Dividing the data into 3 clusters has captured the data well, however further division of cluster 2 would be better as the cluster 2 has combined both mediam and high profit products together.
